@@ -217,21 +217,21 @@ namespace NthDeveloper.Rtf
                     else if (!_ignorable)
                     {
                         int c = Int32.Parse(hex, System.Globalization.NumberStyles.HexNumber);
-						if (_currentEncoding.IsSingleByte || c < 128) // "\",  "{", and "}" are always escaped!
-						{
-							_singleByteData[0] = (byte)c;
-							_outputTextList.Add(_currentEncoding.GetString(_singleByteData));
-						}
-						else
-						{
-							_doubleByteData[0] = (byte)c;
+                        if (_currentEncoding.IsSingleByte || c < 128) // "\",  "{", and "}" are always escaped!
+                        {
+                            _singleByteData[0] = (byte)c;
+                            _outputTextList.Add(_currentEncoding.GetString(_singleByteData));
+                        }
+                        else
+                        {
+                            _doubleByteData[0] = (byte)c;
 
-							secondByteMatch = _matches[++i]; // increment to get next match
-							secondByteHex = secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
-							_doubleByteData[1] = byte.Parse(secondByteHex, System.Globalization.NumberStyles.HexNumber);
+                            secondByteMatch = _matches[++i]; // increment to get next match
+                            secondByteHex = secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
+                            _doubleByteData[1] = byte.Parse(secondByteHex, System.Globalization.NumberStyles.HexNumber);
 
-							_outputTextList.Add(_currentEncoding.GetString(_doubleByteData));
-						}
+                            _outputTextList.Add(_currentEncoding.GetString(_doubleByteData));
+                        }
                     }
                 }
                 else if (!String.IsNullOrEmpty(tchar))
