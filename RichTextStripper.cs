@@ -109,16 +109,16 @@ namespace NthDeveloper.Rtf
             //Parse font table
             List<System.Text.Encoding> _fontEntries = parseRTFFontTableAndGetEncodingList(inputRtf);
 
-			byte[] _singleByteData = new byte[1]; // for Single Byte Character Sets (SBCS) (i.e. most of them)
-			byte[] _doubleByteData = new byte[2]; // for Double Byte Character Sets (DBCS) (at least 4 of them)
+            byte[] _singleByteData = new byte[1]; // for Single Byte Character Sets (SBCS) (i.e. most of them)
+            byte[] _doubleByteData = new byte[2]; // for Double Byte Character Sets (DBCS) (at least 4 of them)
 
             var _stack = new Stack<StackEntry>(128);
             bool _ignorable = false;              // Whether this group (and all inside it) are "ignorable".
             int _ucskip = 1;                      // Number of ASCII characters to skip after a unicode character.
             int _curskip = 0;                     // Number of ASCII characters left to skip
             var _outputTextList = new List<string>();    // Output buffer.            
-			Match secondByteMatch = null;         // Only used for Double Byte Character Sets (DBCS)
-			string secondByteHex = null;          // Only used for Double Byte Character Sets (DBCS)
+            Match _secondByteMatch = null;         // Only used for Double Byte Character Sets (DBCS)
+            string _secondByteHex = null;          // Only used for Double Byte Character Sets (DBCS)
 
             MatchCollection _matches = RtfRegex.Matches(inputRtf);
 
@@ -226,9 +226,9 @@ namespace NthDeveloper.Rtf
                         {
                             _doubleByteData[0] = (byte)c;
 
-                            secondByteMatch = _matches[++i]; // increment to get next match
-                            secondByteHex = secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
-                            _doubleByteData[1] = byte.Parse(secondByteHex, System.Globalization.NumberStyles.HexNumber);
+                            _secondByteMatch = _matches[++i]; // increment to get next match
+                            _secondByteHex = _secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
+                            _doubleByteData[1] = byte.Parse(_secondByteHex, System.Globalization.NumberStyles.HexNumber);
 
                             _outputTextList.Add(_currentEncoding.GetString(_doubleByteData));
                         }
