@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Collections;
 
 namespace NthDeveloper.Rtf
 {
@@ -111,13 +109,16 @@ namespace NthDeveloper.Rtf
             //Parse font table
             List<System.Text.Encoding> _fontEntries = parseRTFFontTableAndGetEncodingList(inputRtf);
 
-            byte[] _byteData = new byte[1];
+            byte[] _singleByteData = new byte[1]; // for Single Byte Character Sets (SBCS) (i.e. most of them)
+            byte[] _doubleByteData = new byte[2]; // for Double Byte Character Sets (DBCS) (at least 4 of them)
 
             var _stack = new Stack<StackEntry>(128);
             bool _ignorable = false;              // Whether this group (and all inside it) are "ignorable".
             int _ucskip = 1;                      // Number of ASCII characters to skip after a unicode character.
             int _curskip = 0;                     // Number of ASCII characters left to skip
             var _outputTextList = new List<string>();    // Output buffer.            
+            Match _secondByteMatch = null;         // Only used for Double Byte Character Sets (DBCS)
+            string _secondByteHex = null;          // Only used for Double Byte Character Sets (DBCS)
 
             MatchCollection _matches = RtfRegex.Matches(inputRtf);
 
@@ -216,13 +217,21 @@ namespace NthDeveloper.Rtf
                     else if (!_ignorable)
                     {
                         int c = Int32.Parse(hex, System.Globalization.NumberStyles.HexNumber);
-                        if (c < 256)
+                        if (_currentEncoding.IsSingleByte || c < 128) // "\",  "{", and "}" are always escaped!
                         {
-                            _byteData[0] = (byte)c;
-                            _outputTextList.Add(_currentEncoding.GetString(_byteData));
+                            _singleByteData[0] = (byte)c;
+                            _outputTextList.Add(_currentEncoding.GetString(_singleByteData));
                         }
                         else
-                            _outputTextList.Add(Char.ConvertFromUtf32(c));
+                        {
+                            _doubleByteData[0] = (byte)c;
+
+                            _secondByteMatch = _matches[++i]; // increment to get next match
+                            _secondByteHex = _secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
+                            _doubleByteData[1] = byte.Parse(_secondByteHex, System.Globalization.NumberStyles.HexNumber);
+
+                            _outputTextList.Add(_currentEncoding.GetString(_doubleByteData));
+                        }
                     }
                 }
                 else if (!String.IsNullOrEmpty(tchar))
