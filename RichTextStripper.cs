@@ -120,22 +120,21 @@ namespace NthDeveloper.Rtf
             Match _secondByteMatch = null;         // Only used for Double Byte Character Sets (DBCS)
             string _secondByteHex = null;          // Only used for Double Byte Character Sets (DBCS)
 
-            MatchCollection _matches = RtfRegex.Matches(inputRtf);
+            Match _match = RtfRegex.Match(inputRtf);
 
-            if (_matches.Count == 0)
+            if (!_match.Success)
                 return inputRtf;
 
             System.Text.Encoding _currentEncoding = System.Text.Encoding.Default;//Use current system's encoding by default
 
-            for (int i = 0; i < _matches.Count; i++)
+            while (_match.Success)
             {
-                Match match = _matches[i];
-                string word = match.Groups[1].Value;
-                string arg = match.Groups[2].Value;
-                string hex = match.Groups[3].Value;
-                string character = match.Groups[4].Value;
-                string brace = match.Groups[5].Value;
-                string tchar = match.Groups[6].Value;
+                string word = _match.Groups[1].Value;
+                string arg = _match.Groups[2].Value;
+                string hex = _match.Groups[3].Value;
+                string character = _match.Groups[4].Value;
+                string brace = _match.Groups[5].Value;
+                string tchar = _match.Groups[6].Value;
 
                 if (!String.IsNullOrEmpty(brace))
                 {
@@ -226,7 +225,10 @@ namespace NthDeveloper.Rtf
                         {
                             _doubleByteData[0] = (byte)c;
 
-                            _secondByteMatch = _matches[++i]; // increment to get next match
+                            _secondByteMatch = _match.NextMatch();
+                            if (!_secondByteMatch.Success)
+                                break;
+
                             _secondByteHex = _secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
                             _doubleByteData[1] = byte.Parse(_secondByteHex, System.Globalization.NumberStyles.HexNumber);
 
@@ -245,6 +247,8 @@ namespace NthDeveloper.Rtf
                         _outputTextList.Append(tchar);
                     }
                 }
+
+                _match = _match.NextMatch();
             }
 
             return _outputTextList.ToString();
