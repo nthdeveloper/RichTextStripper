@@ -116,7 +116,7 @@ namespace NthDeveloper.Rtf
             bool _ignorable = false;              // Whether this group (and all inside it) are "ignorable".
             int _ucskip = 1;                      // Number of ASCII characters to skip after a unicode character.
             int _curskip = 0;                     // Number of ASCII characters left to skip
-            var _outputTextList = new List<string>();    // Output buffer.            
+            StringBuilder _outputTextList = new StringBuilder(2048);
             Match _secondByteMatch = null;         // Only used for Double Byte Character Sets (DBCS)
             string _secondByteHex = null;          // Only used for Double Byte Character Sets (DBCS)
 
@@ -159,12 +159,12 @@ namespace NthDeveloper.Rtf
                     if (character == "~")
                     {
                         if (!_ignorable)
-                            _outputTextList.Add("\xA0");
+                            _outputTextList.Append("\xA0");
                     }
                     else if ("{}\\".Contains(character))
                     {
                         if (!_ignorable)
-                            _outputTextList.Add(character);
+                            _outputTextList.Append(character);
                     }
                     else if (character == "*")
                     {
@@ -192,7 +192,7 @@ namespace NthDeveloper.Rtf
                     }
                     else if (SpecialCharacters.ContainsKey(word))
                     {
-                        _outputTextList.Add(SpecialCharacters[word]);
+                        _outputTextList.Append(SpecialCharacters[word]);
                     }
                     else if (word == "uc")
                     {
@@ -204,7 +204,7 @@ namespace NthDeveloper.Rtf
                         if (c < 0)
                             c += 0x10000;
 
-                        _outputTextList.Add(Char.ConvertFromUtf32(c));
+                        _outputTextList.Append(Char.ConvertFromUtf32(c));
                         _curskip = _ucskip;
                     }
                 }
@@ -220,7 +220,7 @@ namespace NthDeveloper.Rtf
                         if (_currentEncoding.IsSingleByte || c < 128) // "\",  "{", and "}" are always escaped!
                         {
                             _singleByteData[0] = (byte)c;
-                            _outputTextList.Add(_currentEncoding.GetString(_singleByteData));
+                            _outputTextList.Append(_currentEncoding.GetString(_singleByteData));
                         }
                         else
                         {
@@ -230,7 +230,7 @@ namespace NthDeveloper.Rtf
                             _secondByteHex = _secondByteMatch.Groups[3].Value; // should only be hex following a DBCS lead byte
                             _doubleByteData[1] = byte.Parse(_secondByteHex, System.Globalization.NumberStyles.HexNumber);
 
-                            _outputTextList.Add(_currentEncoding.GetString(_doubleByteData));
+                            _outputTextList.Append(_currentEncoding.GetString(_doubleByteData));
                         }
                     }
                 }
@@ -242,12 +242,12 @@ namespace NthDeveloper.Rtf
                     }
                     else if (!_ignorable)
                     {
-                        _outputTextList.Add(tchar);
+                        _outputTextList.Append(tchar);
                     }
                 }
             }
 
-            return String.Join(String.Empty, _outputTextList.ToArray());
+            return _outputTextList.ToString();
         }
 
         /// <summary>
