@@ -146,10 +146,13 @@ namespace NthDeveloper.Rtf
                     }
                     else if (brace == "}")
                     {
-                        // Pop state
-                        StackEntry entry = _stack.Pop();
-                        _ucskip = entry.NumberOfCharactersToSkip;
-                        _ignorable = entry.Ignorable;
+                        if(_stack.Count > 0)
+                        {
+                            // Pop state
+                            StackEntry entry = _stack.Pop();
+                            _ucskip = entry.NumberOfCharactersToSkip;
+                            _ignorable = entry.Ignorable;
+                        }
                     }
                 }
                 else if (!String.IsNullOrEmpty(character)) // \x (not a letter)
